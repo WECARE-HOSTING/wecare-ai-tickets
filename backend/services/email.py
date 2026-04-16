@@ -1,4 +1,6 @@
+import errno
 import smtplib
+import socket
 from email.header import Header
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -21,6 +23,30 @@ def _prioridade_exibicao(prioridade: str) -> str:
 def _descricao_html(texto: str) -> str:
     esc = escape(texto)
     return esc.replace("\n", "<br>\n")
+
+
+class _SMTPIPv4(smtplib.SMTP):
+    """Liga só por IPv4 — evita errno 101 em ambientes sem rota IPv6 (ex.: Railway)."""
+
+    def _get_socket(self, host, port, timeout):
+        addrs = socket.getaddrinfo(host, port, socket.AF_INET, socket.SOCK_STREAM)
+        if not addrs:
+            raise OSError(
+                errno.EADDRNOTAVAIL,
+                f"SMTP: nenhum endereço IPv4 para {host!r}",
+            )
+        last_exc: OSError | None = None
+        for _af, socktype, proto, _canon, sa in addrs:
+            sock = socket.socket(socket.AF_INET, socktype, proto)
+            sock.settimeout(timeout)
+            try:
+                sock.connect(sa)
+                return sock
+            except OSError as exc:
+                last_exc = exc
+                sock.close()
+        assert last_exc is not None
+        raise last_exc
 
 
 def send_ticket_notification(
@@ -87,9 +113,7 @@ def send_ticket_notification(
     msg.attach(MIMEText(body_html, "html", "utf-8"))
 
     timeout = max(5, int(settings.smtp_timeout_seconds))
-    with smtplib.SMTP(
-        settings.smtp_host, settings.smtp_port, timeout=timeout
-    ) as server:
+    with _SMTPIPv4(settings.smtp_host, settings.smtp_port, timeout=timeout) as server:
         server.starttls()
         server.login(settings.smtp_user, settings.smtp_pass)
         server.sendmail(from_addr, [to_addr], msg.as_string())
