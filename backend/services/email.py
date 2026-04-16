@@ -32,6 +32,7 @@ def send_ticket_notification(
     prioridade: str,
     modulo_afetado: str,
     descricao_tecnica: str,
+    cursor_prompt: str,
     link: str | None,
 ) -> None:
     settings = get_settings()
@@ -70,6 +71,10 @@ def send_ticket_notification(
   <h3 style="margin-bottom: 0.5rem;">Descrição técnica</h3>
   <div style="margin-bottom: 1.25rem; padding: 12px; background: #f5f5f5; border-radius: 8px;">
     {_descricao_html(descricao_tecnica)}
+  </div>
+  <h3 style="margin-bottom: 0.5rem;">Prompt para Cursor (IA)</h3>
+  <div style="margin-bottom: 1.25rem; padding: 12px; background: #f5f5f5; border-radius: 8px;">
+    {_descricao_html(cursor_prompt)}
   </div>
   <p style="margin: 0;"><strong>Link</strong></p>
   <p style="margin: 0.25rem 0 0 0;">{link_html}</p>

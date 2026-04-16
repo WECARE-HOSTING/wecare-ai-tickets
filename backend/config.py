@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     )
 
     anthropic_api_key: str = ""
+    gcp_project_id: str = "prj-juma-farol360-poc"
+    vertex_location: str = "us-central1"
+    google_application_credentials: str = ""
     linear_api_key: str = ""
     linear_team_id: str = ""
     linear_project_id: str = ""
