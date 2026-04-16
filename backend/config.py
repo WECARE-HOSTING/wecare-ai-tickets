@@ -40,6 +40,7 @@ class Settings(BaseSettings):
     smtp_port: int = 587
     smtp_user: str = ""
     smtp_pass: str = ""
+    smtp_timeout_seconds: int = 20
     email_to: str = "felipe@wecarehosting.com.br"
 
     cors_origins: str = "http://localhost:5173"

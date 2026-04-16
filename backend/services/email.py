@@ -6,8 +6,6 @@ from html import escape
 
 from config import get_settings
 
-_FROM = "fe.malveira.87@gmail.com"
-
 _PRIORIDADE_LABEL = {
     "urgent": "Urgente",
     "high": "Alta",
@@ -81,13 +79,17 @@ def send_ticket_notification(
 </body>
 </html>"""
 
+    from_addr = settings.smtp_user.strip()
     msg = MIMEMultipart("alternative")
     msg["Subject"] = str(Header(subject, "utf-8"))
-    msg["From"] = _FROM
+    msg["From"] = from_addr
     msg["To"] = to_addr
     msg.attach(MIMEText(body_html, "html", "utf-8"))
 
-    with smtplib.SMTP(settings.smtp_host, settings.smtp_port) as server:
+    timeout = max(5, int(settings.smtp_timeout_seconds))
+    with smtplib.SMTP(
+        settings.smtp_host, settings.smtp_port, timeout=timeout
+    ) as server:
         server.starttls()
         server.login(settings.smtp_user, settings.smtp_pass)
-        server.sendmail(_FROM, [to_addr], msg.as_string())
+        server.sendmail(from_addr, [to_addr], msg.as_string())
