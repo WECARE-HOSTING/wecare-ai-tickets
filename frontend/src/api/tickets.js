@@ -1,5 +1,13 @@
-const API_BASE =
-  import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "http://localhost:8000";
+const API_BASE = (() => {
+  const raw = import.meta.env.VITE_API_URL;
+  if (raw !== undefined && raw !== "") {
+    return raw.replace(/\/$/, "");
+  }
+  if (import.meta.env.PROD) {
+    return "";
+  }
+  return "http://localhost:8000";
+})();
 
 async function parseError(res) {
   let detail = res.statusText;

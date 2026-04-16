@@ -1,0 +1,12 @@
+.git
+.github
+**/__pycache__
+**/*.pyc
+.venv
+venv
+frontend/node_modules
+.env
+service_account.json
+*.md
+exemplo.txt
+.cursor
