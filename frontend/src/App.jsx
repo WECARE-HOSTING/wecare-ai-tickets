@@ -17,6 +17,7 @@ export default function App() {
   const [descricao, setDescricao] = useState("");
   const [draft, setDraft] = useState(emptyDraft);
   const [linear, setLinear] = useState(null);
+  const [emailError, setEmailError] = useState("");
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [loadingCreate, setLoadingCreate] = useState(false);
   const [error, setError] = useState("");
@@ -41,6 +42,9 @@ export default function App() {
     try {
       const res = await createTicket(draft);
       setLinear(res.linear);
+      setEmailError(
+        res.email_sent === false && res.email_error ? String(res.email_error) : ""
+      );
       setStep("done");
     } catch (e) {
       setError(e.message || "Falha ao criar ticket.");
@@ -54,6 +58,7 @@ export default function App() {
     setDescricao("");
     setDraft(emptyDraft());
     setLinear(null);
+    setEmailError("");
     setError("");
   }
 
@@ -116,6 +121,15 @@ export default function App() {
                 </a>
               ) : null}
             </div>
+            {emailError ? (
+              <div
+                className="rounded-xl border border-amber-600/40 bg-amber-950/40 px-4 py-3 text-sm text-amber-100"
+                role="status"
+              >
+                <p className="font-semibold text-amber-200">E-mail de notificação não enviado</p>
+                <p className="mt-1 text-amber-100/90">{emailError}</p>
+              </div>
+            ) : null}
             <button
               type="button"
               onClick={reset}

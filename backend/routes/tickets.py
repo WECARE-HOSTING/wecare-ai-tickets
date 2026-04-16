@@ -1,3 +1,4 @@
+import logging
 from typing import Literal
 
 from fastapi import APIRouter, HTTPException
@@ -6,6 +7,7 @@ from pydantic import BaseModel, Field
 from services import ai, email as email_service
 from services import linear as linear_service
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/tickets", tags=["tickets"])
 
 
@@ -67,6 +69,7 @@ def create_ticket(body: TicketCreateRequest):
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Falha ao criar issue no Linear: {e}") from e
 
+    email_error: str | None = None
     try:
         email_service.send_ticket_notification(
             tipo=draft.tipo,
@@ -78,14 +81,18 @@ def create_ticket(body: TicketCreateRequest):
             link=issue.get("url"),
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        email_error = str(e)
+        logger.warning("Notificação por e-mail não enviada (config): %s", email_error)
     except Exception as e:
-        raise HTTPException(
-            status_code=502,
-            detail=f"Issue criada ({issue.get('url')}), mas falha ao enviar e-mail: {e}",
-        ) from e
+        email_error = str(e)
+        logger.exception(
+            "Issue criada no Linear (%s), mas falha ao enviar e-mail.",
+            issue.get("url"),
+        )
 
     return {
         "ok": True,
         "linear": issue,
+        "email_sent": email_error is None,
+        "email_error": email_error,
     }
