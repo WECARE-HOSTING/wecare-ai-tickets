@@ -1,0 +1,21 @@
+[project]
+name = "wecare-ai-tickets-backend"
+version = "0.1.0"
+description = "API FastAPI para tickets de TI com IA, Linear e e-mail."
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=0.42.0",
+    "fastapi>=0.115.6",
+    "httpx>=0.28.0",
+    "pydantic-settings>=2.6.1",
+    "python-dotenv>=1.0.1",
+    "uvicorn[standard]>=0.32.1",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.8.4",
+]
+
+[tool.uv]
+default-groups = ["dev"]

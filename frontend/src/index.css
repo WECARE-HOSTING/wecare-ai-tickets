@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+/* Paleta WeCare Hosting 2025 — brandbook */
+@theme {
+  --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* Vermelho coral do pin (#E55A4F) + escala */
+  --color-wecare-50: #fef5f4;
+  --color-wecare-100: #fce9e7;
+  --color-wecare-200: #f9d5d1;
+  --color-wecare-300: #f3b1aa;
+  --color-wecare-400: #ea8377;
+  --color-wecare-500: #e55a4f;
+  --color-wecare-600: #d64438;
+  --color-wecare-700: #b3382f;
+  --color-wecare-800: #94332c;
+  --color-wecare-900: #7b302b;
+  --color-wecare-950: #431614;
+
+  --color-wecare-orange: #e67e22;
+  --color-wecare-teal: #16a085;
+  --color-wecare-yellow: #f39c12;
+  --color-wecare-ink: #333333;
+  --color-wecare-muted: #777777;
+  --color-wecare-surface: #f8f9fa;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  @apply min-h-screen antialiased bg-zinc-950 text-zinc-100 font-sans;
+  background-image:
+    radial-gradient(ellipse 120% 80% at 50% -20%, rgba(229, 90, 79, 0.28), transparent),
+    radial-gradient(ellipse 55% 45% at 100% 0%, rgba(22, 160, 133, 0.12), transparent),
+    radial-gradient(ellipse 40% 35% at 0% 20%, rgba(230, 126, 34, 0.08), transparent);
+}
