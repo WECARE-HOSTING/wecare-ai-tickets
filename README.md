@@ -1,67 +1,109 @@
-## wecare-ai-tickets
+# 🤖 WeCare AI Tickets
 
-Aplicação demo de abertura de tickets de TI usando **Gemini 2.5 Flash (Vertex AI)** para estruturar o pedido, criação de issue no **Linear** (GraphQL oficial via HTTPS) e notificação por **e-mail via SMTP**.  
-Não há banco de dados: o fluxo é **stateless** e pensado para ser simples de entender e adaptar.
-
----
-
-## Visão geral
-
-- **Frontend**: React + Vite + Tailwind.
-- **Backend**: FastAPI (Python 3.11+, gerenciado com [UV](https://docs.astral.sh/uv/)).
-- **IA**: Vertex AI / Gemini 2.5 Flash.
-- **Tickets**: Linear (API GraphQL pública).
-- **Notificações**: envio de e-mail via SMTP.
-
-Fluxo de uso:
-
-1. Usuário descreve o problema de TI em texto livre.
-2. Backend chama o Gemini para gerar um ticket estruturado (tipo, título, descrição técnica, prioridade, módulo afetado, `cursor_prompt`).
-3. Usuário revisa e confirma os dados no frontend.
-4. Backend cria a issue no Linear e envia um e-mail com o resumo e o link da issue.
-5. A tela final exibe um prompt pronto para uso em um Cursor Agent, com botão de copiar.
+> Demo funcional de abertura inteligente de tickets de TI — o usuário descreve o problema em linguagem natural e a IA estrutura, classifica, cria a issue no Linear e notifica por e-mail automaticamente.
 
 ---
 
-## Pré-requisitos
+## ✨ O que este projeto demonstra
 
-- [UV](https://docs.astral.sh/uv/) para Python 3.11+.
-- Node.js 20+ (para o frontend com Vite).
-- Projeto GCP com **Vertex AI API** habilitada e conta de serviço com permissão para usar o modelo (por exemplo, papel **Vertex AI User**).
-- Conta no **Linear** com acesso à API.
-- Servidor SMTP para envio dos e-mails.
-
----
-
-## Configuração de ambiente
-
-1. Copie o exemplo de variáveis para a raiz do repositório:
-
-   ```bash
-   cp .env.example .env
-   ```
-
-2. Coloque o JSON da conta de serviço na raiz como `service_account.json`  
-   (ou aponte `GOOGLE_APPLICATION_CREDENTIALS` para outro caminho).
-
-3. Preencha o `.env` com:
-
-   - **GCP_PROJECT_ID**: ID do projeto no GCP (padrão de exemplo no código: `prj-juma-farol360-poc`).
-   - **VERTEX_LOCATION**: região Vertex (ex.: `us-central1`; o modelo precisa existir nessa região).
-   - **GOOGLE_APPLICATION_CREDENTIALS**: caminho para o JSON (relativo à raiz do repo ou absoluto).  
-     Se vazio, o backend assume `service_account.json` na raiz.
-   - **LINEAR_API_KEY**: [Personal API Key](https://linear.app/settings/api) do Linear.
-   - **LINEAR_TEAM_ID**: UUID do time (pode ser obtido via API/GraphQL).
-   - **LINEAR_PROJECT_ID**: UUID do projeto **Atendimentos TI** (opcional, porém recomendado).
-   - **SMTP_*** / **EMAIL_TO**: dados do servidor SMTP (ex.: porta 587 com STARTTLS) e e-mail destinatário.
-
-O backend carrega `.env` da **raiz do projeto** ou de `backend/.env`.
+| Poder da IA | Como aparece na prática |
+|---|---|
+| Classificação automática | "o botão não salva" → IA identifica como **Bug** |
+| Enriquecimento do ticket | Texto raso vira descrição técnica estruturada em Markdown |
+| Prioridade sugerida | IA infere urgência pelo contexto do relato |
+| Módulo afetado | Detecta automaticamente a área do sistema |
+| Cursor Prompt gerado | Prompt pronto para o dev colar no Cursor Agent e implantar a solução |
 
 ---
 
-## Backend (FastAPI + UV)
+## 🏗️ Stack
 
-Na pasta `backend`:
+- **Frontend**: React 19 + Vite + Tailwind CSS
+- **Backend**: FastAPI · Python 3.11+ · gerenciado com [UV (Astral)](https://docs.astral.sh/uv/)
+- **IA principal**: Claude (Anthropic API) `claude-sonnet-4-20250514`
+- **IA fallback**: Gemini 2.5 Flash via Vertex AI *(ativado automaticamente se Claude falhar)*
+- **Tickets**: Linear API (GraphQL)
+- **Notificações**: E-mail via SMTP (Gmail)
+- **Stateless**: sem banco de dados
+
+---
+
+## 🔄 Fluxo completo
+
+```
+Usuário digita texto livre
+        ↓
+POST /tickets/preview
+        ↓
+IA (Claude → fallback Gemini) retorna:
+  • tipo        Bug | Melhoria | Implantação | Dúvida
+  • titulo
+  • descricao_tecnica  (Markdown)
+  • prioridade  urgent | high | medium | low
+  • modulo_afetado
+  • cursor_prompt  ← prompt pronto para o Cursor Agent
+        ↓
+Usuário revisa no frontend
+        ↓
+POST /tickets/create
+        ↓
+  ┌─────────────────┐   ┌──────────────────────┐
+  │  Issue no Linear │   │  E-mail de notificação│
+  └─────────────────┘   └──────────────────────┘
+        ↓
+Frontend exibe cursor_prompt com botão de copiar
+```
+
+---
+
+## ⚙️ Pré-requisitos
+
+- [UV](https://docs.astral.sh/uv/) instalado
+- Node.js 20+
+- Conta no [Linear](https://linear.app) com Personal API Key
+- Anthropic API Key **e/ou** GCP com Vertex AI habilitado
+- Conta Gmail com [App Password](https://myaccount.google.com/apppasswords) gerada
+
+---
+
+## 🚀 Setup
+
+### 1. Variáveis de ambiente
+
+```bash
+cp .env.example .env
+```
+
+Preencha o `.env`:
+
+```env
+# ── IA Principal (Claude) ──────────────────────────────
+# Deixe vazio para pular direto para o fallback Gemini
+ANTHROPIC_API_KEY=sk-ant-...
+
+# ── IA Fallback (Gemini / Vertex AI) ──────────────────
+GCP_PROJECT_ID=seu-projeto-gcp
+VERTEX_LOCATION=us-central1
+GOOGLE_APPLICATION_CREDENTIALS=service_account.json
+
+# ── Linear ────────────────────────────────────────────
+LINEAR_API_KEY=lin_api_...
+LINEAR_TEAM_ID=uuid-do-time
+LINEAR_PROJECT_ID=uuid-do-projeto-atendimentos-ti
+
+# ── E-mail (Gmail SMTP) ───────────────────────────────
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=seu@gmail.com
+SMTP_PASS=app-password-16-chars
+EMAIL_TO=destino@empresa.com.br
+```
+
+> ⚠️ Se usar Gemini, coloque o `service_account.json` na raiz do projeto (não versionar).
+
+---
+
+### 2. Backend
 
 ```bash
 cd backend
@@ -69,23 +111,10 @@ uv sync
 uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-- API: `http://localhost:8000`
-- Documentação interativa (Swagger): `http://localhost:8000/docs`
-- **CORS** liberado para `http://localhost:5173`.
+- API: [http://localhost:8000](http://localhost:8000)
+- Swagger: [http://localhost:8000/docs](http://localhost:8000/docs)
 
-### Endpoints principais
-
-| Método | Caminho           | Descrição                                                                                     |
-|--------|-------------------|-----------------------------------------------------------------------------------------------|
-| POST   | `/tickets/preview`| Corpo: `{ "descricao": "..." }` — chama Gemini e devolve um JSON de ticket para revisão.     |
-| POST   | `/tickets/create` | Usa o corpo confirmado pelo usuário — cria issue no Linear e envia e-mail de notificação.    |
-| GET    | `/health`         | Health check simples.                                                                        |
-
----
-
-## Frontend (React + Vite + Tailwind)
-
-Na pasta `frontend`:
+### 3. Frontend
 
 ```bash
 cd frontend
@@ -93,18 +122,77 @@ npm install
 npm run dev
 ```
 
-Abra `http://localhost:5173` no navegador.  
-Se a API não estiver em `http://localhost:8000`, defina `VITE_API_URL` no `.env` da raiz apontando para a URL correta do backend.
+Acesse [http://localhost:5173](http://localhost:5173)
 
 ---
 
-## Observações sobre o Linear
+## 📡 Endpoints
 
-A API pública do Linear é **GraphQL** em `https://api.linear.app/graphql` (requisição `POST` com JSON).  
-O módulo `backend/services/linear.py` encapsula a criação de issues usando essa API.
+| Método | Rota | Descrição |
+|---|---|---|
+| `POST` | `/tickets/preview` | Recebe `{ "descricao": "..." }` → retorna ticket estruturado pela IA |
+| `POST` | `/tickets/create` | Confirma o ticket → cria no Linear + envia e-mail |
+| `GET` | `/health` | Health check |
 
 ---
 
-## Licença
+## 🔑 Obtendo os IDs do Linear
 
-Uso interno / demo WeCare.
+Com o `.env` preenchido com `LINEAR_API_KEY`, rode na raiz:
+
+```bash
+uv run python get_linear_ids.py
+```
+
+O script lista todos os **Teams** e **Projetos** com seus UUIDs.
+
+---
+
+## 🤖 Cursor Prompt — o diferencial
+
+Após a criação do ticket, o sistema exibe um **prompt técnico gerado pela IA** pronto para ser colado no Cursor Agent. Ele contém:
+
+- Contexto do problema
+- Comportamento esperado
+- Sugestão de onde no código atuar
+- Critérios de aceite
+
+Isso fecha o ciclo: **do relato do problema até a implementação da solução**, tudo guiado por IA.
+
+---
+
+## 📁 Estrutura do projeto
+
+```
+wecare-ai-tickets/
+├── backend/
+│   ├── main.py
+│   ├── config.py
+│   ├── routes/tickets.py
+│   └── services/
+│       ├── ai.py        # Claude + fallback Gemini
+│       ├── linear.py    # Criação de issues via GraphQL
+│       └── email.py     # Notificação SMTP
+├── frontend/
+│   └── src/
+│       ├── App.jsx
+│       ├── components/
+│       │   ├── TicketForm.jsx
+│       │   ├── AiPreview.jsx
+│       │   └── CursorPrompt.jsx
+│       └── api/tickets.js
+├── get_linear_ids.py
+├── .env.example
+└── README.md
+```
+
+---
+
+## 🔒 Segurança
+
+- Nunca versione `.env` ou `service_account.json`
+- Ambos já estão no `.gitignore`
+
+---
+
+*Projeto demo interno — WeCare © 2026*
