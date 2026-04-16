@@ -4,8 +4,9 @@ version = "0.1.0"
 description = "API FastAPI para tickets de TI com IA, Linear e e-mail."
 requires-python = ">=3.11"
 dependencies = [
-    "anthropic>=0.42.0",
+    "anthropic>=0.50.0",
     "fastapi>=0.115.6",
+    "google-cloud-aiplatform>=1.85.0",
     "httpx>=0.28.0",
     "pydantic-settings>=2.6.1",
     "python-dotenv>=1.0.1",
