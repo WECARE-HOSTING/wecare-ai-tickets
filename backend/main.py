@@ -19,7 +19,7 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(
     title="WeCare AI Tickets",
-    description="Demo de tickets de TI com IA, Linear e e-mail.",
+    description="Demo de tickets de TI com Gemini (Vertex AI), Linear e e-mail.",
     version="0.1.0",
     lifespan=lifespan,
 )

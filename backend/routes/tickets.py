@@ -74,6 +74,7 @@ def create_ticket(body: TicketCreateRequest):
             prioridade=draft.prioridade,
             modulo_afetado=draft.modulo_afetado,
             descricao_tecnica=draft.descricao_tecnica,
+            cursor_prompt=draft.cursor_prompt,
             link=issue.get("url"),
         )
     except ValueError as e:
@@ -87,5 +88,4 @@ def create_ticket(body: TicketCreateRequest):
     return {
         "ok": True,
         "linear": issue,
-        "cursor_prompt": draft.cursor_prompt,
     }
