@@ -12,6 +12,8 @@ from vertexai.generative_models import GenerationConfig, GenerativeModel
 from config import Settings, get_settings
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+# JSON inline em GOOGLE_APPLICATION_CREDENTIALS (comum na Railway) não pode ser usado como caminho.
+_INLINE_SA_FILE = Path("/tmp/wecare-gcp-inline-credentials.json")
 CLAUDE_MODEL = "claude-sonnet-4-6"
 GEMINI_MODEL = "gemini-2.5-flash"
 logger = logging.getLogger(__name__)
@@ -32,12 +34,21 @@ Seja específico e técnico no cursor_prompt."""
 
 def _resolve_credentials_path(settings: Settings) -> Path:
     raw = (settings.google_application_credentials or "").strip()
-    if raw:
-        p = Path(raw)
-        if not p.is_absolute():
-            p = _REPO_ROOT / p
-    else:
-        p = _REPO_ROOT / "service_account.json"
+    if not raw:
+        return (_REPO_ROOT / "service_account.json").resolve()
+    # PaaS: variável GOOGLE_APPLICATION_CREDENTIALS com o JSON completo (erro ENAMETOOLONG se for Path).
+    if raw.startswith("{"):
+        try:
+            json.loads(raw)
+        except json.JSONDecodeError as exc:
+            raise ValueError(
+                "GOOGLE_APPLICATION_CREDENTIALS parece JSON mas não é JSON válido."
+            ) from exc
+        _INLINE_SA_FILE.write_text(raw, encoding="utf-8")
+        return _INLINE_SA_FILE.resolve()
+    p = Path(raw)
+    if not p.is_absolute():
+        p = _REPO_ROOT / p
     return p.resolve()
 
 
@@ -137,15 +148,25 @@ def enrich_ticket_description(descricao_usuario: str) -> dict[str, Any]:
         f"{descricao_usuario.strip()}"
     )
 
-    try:
-        return _generate_with_claude(user_content, settings)
-    except Exception:
-        logger.exception("Falha ao gerar resposta com Claude; tentando fallback para Gemini.")
+    if (settings.anthropic_api_key or "").strip():
+        try:
+            return _generate_with_claude(user_content, settings)
+        except Exception:
+            logger.exception("Falha ao gerar resposta com Claude; tentando fallback para Gemini.")
 
     try:
         return _generate_with_gemini(user_content)
     except Exception as gemini_exc:
-        logger.exception("Falha ao gerar resposta com Gemini após erro no Claude.")
+        logger.exception("Falha ao gerar resposta com Gemini (Claude indisponível ou já falhou).")
+        detail = str(gemini_exc).strip()
+        if "Credenciais Google não encontradas" in detail or "GCP_PROJECT_ID não configurado" in detail:
+            raise RuntimeError(
+                "IA indisponível: credenciais Google Vertex em falta. "
+                "Na Railway, cria a variável GCP_SERVICE_ACCOUNT_JSON com o JSON completo da service account "
+                "(o ficheiro service_account.json não existe no servidor) e confirma GCP_PROJECT_ID / VERTEX_LOCATION."
+            ) from gemini_exc
         raise RuntimeError(
-            "Falha ao gerar resposta com IA: Claude e Gemini indisponíveis ou retornaram erro."
+            "Falha ao gerar resposta com IA (Gemini/Vertex). "
+            "Confere logs do servidor, quotas GCP e permissões da service account (Vertex AI User). "
+            f"Detalhe: {detail[:500]}"
         ) from gemini_exc
