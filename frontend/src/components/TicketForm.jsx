@@ -27,7 +27,7 @@ export default function TicketForm({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled}
-          placeholder="Ex.: O painel de backups não lista jobs desde ontem; clientes X e Y afetados..."
+          placeholder="Ex.: Preciso de uma nova visão consolidada de comissão por parceiro, com total mensal e detalhamento por contrato."
           className="w-full resize-y rounded-xl border border-wecare-700/50 bg-zinc-900/80 px-4 py-3 text-sm text-zinc-100 shadow-inner outline-none ring-wecare-500/30 placeholder:text-zinc-500 focus:border-wecare-500 focus:ring-2 disabled:opacity-50"
         />
       </div>

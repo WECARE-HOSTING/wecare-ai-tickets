@@ -12,7 +12,14 @@ const prioridadeLabel = {
   low: "Baixa",
 };
 
-export default function AiPreview({ draft, onConfirm, onBack, disabled, error }) {
+export default function AiPreview({
+  draft,
+  onChangeDraft,
+  onConfirm,
+  onBack,
+  disabled,
+  error,
+}) {
   const tipoClass =
     tipoColors[draft.tipo] ||
     "bg-wecare-500/15 text-wecare-100 ring-wecare-500/30";
@@ -34,16 +41,39 @@ export default function AiPreview({ draft, onConfirm, onBack, disabled, error })
       </div>
 
       <div>
-        <h3 className="text-lg font-semibold text-white">{draft.titulo}</h3>
+        <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-wecare-300">
+          Título sugerido pela IA
+        </label>
+        <input
+          type="text"
+          className="w-full rounded-xl border border-zinc-800 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-100 outline-none ring-wecare-500/30 placeholder:text-zinc-500 focus:border-wecare-500 focus:ring-2 disabled:opacity-50"
+          value={draft.titulo}
+          onChange={(e) =>
+            onChangeDraft?.({
+              ...draft,
+              titulo: e.target.value,
+            })
+          }
+          disabled={disabled}
+        />
       </div>
 
       <div>
         <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-wecare-300">
-          Descrição técnica (markdown)
+          Descrição técnica sugerida (markdown)
         </h4>
-        <div className="max-h-72 overflow-auto rounded-xl border border-zinc-800 bg-zinc-900/60 p-4 text-sm leading-relaxed text-zinc-200">
-          <pre className="whitespace-pre-wrap font-sans">{draft.descricao_tecnica}</pre>
-        </div>
+        <textarea
+          rows={10}
+          className="w-full rounded-xl border border-zinc-800 bg-zinc-900/80 px-3 py-2 text-sm leading-relaxed text-zinc-200 outline-none ring-wecare-500/30 placeholder:text-zinc-500 focus:border-wecare-500 focus:ring-2 disabled:opacity-50"
+          value={draft.descricao_tecnica}
+          onChange={(e) =>
+            onChangeDraft?.({
+              ...draft,
+              descricao_tecnica: e.target.value,
+            })
+          }
+          disabled={disabled}
+        />
       </div>
 
       {error ? (

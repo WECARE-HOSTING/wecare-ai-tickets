@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { createTicket, previewTicket } from "./api/tickets.js";
 import AiPreview from "./components/AiPreview.jsx";
-import CursorPrompt from "./components/CursorPrompt.jsx";
 import TicketForm from "./components/TicketForm.jsx";
 
 const emptyDraft = () => ({
@@ -42,7 +41,6 @@ export default function App() {
     try {
       const res = await createTicket(draft);
       setLinear(res.linear);
-      setDraft((d) => ({ ...d, cursor_prompt: res.cursor_prompt }));
       setStep("done");
     } catch (e) {
       setError(e.message || "Falha ao criar ticket.");
@@ -92,6 +90,7 @@ export default function App() {
         {step === "preview" ? (
           <AiPreview
             draft={draft}
+            onChangeDraft={setDraft}
             onConfirm={handleCreate}
             onBack={() => {
               setStep("form");
@@ -117,7 +116,6 @@ export default function App() {
                 </a>
               ) : null}
             </div>
-            <CursorPrompt text={draft.cursor_prompt} />
             <button
               type="button"
               onClick={reset}
@@ -130,7 +128,7 @@ export default function App() {
       </main>
 
       <footer className="mt-auto pt-10 text-center text-xs text-zinc-600">
-        Demo stateless · Claude + Linear + SMTP
+        Demo stateless · Linear + SMTP
       </footer>
     </div>
   );

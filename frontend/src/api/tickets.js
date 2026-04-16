@@ -30,7 +30,7 @@ export async function previewTicket(descricao) {
 
 /**
  * @param {Record<string, unknown>} draft
- * @returns {Promise<{ ok: boolean; linear: object; cursor_prompt: string }>}
+ * @returns {Promise<{ ok: boolean; linear: object }>}
  */
 export async function createTicket(draft) {
   const res = await fetch(`${API_BASE}/tickets/create`, {
