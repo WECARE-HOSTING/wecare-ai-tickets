@@ -12,6 +12,8 @@ const prioridadeLabel = {
   low: "Baixa",
 };
 
+const prioridadeOrdem = ["urgent", "high", "medium", "low"];
+
 export default function AiPreview({
   draft,
   onChangeDraft,
@@ -32,11 +34,35 @@ export default function AiPreview({
           {draft.tipo}
         </span>
         <span className="preview-meta-badge rounded-full px-3 py-1 text-xs">
-          Prioridade: {prioridadeLabel[draft.prioridade] ?? draft.prioridade}
-        </span>
-        <span className="preview-meta-badge rounded-full px-3 py-1 text-xs">
           Módulo: {draft.modulo_afetado}
         </span>
+      </div>
+
+      <div>
+        <label
+          htmlFor="preview-prioridade"
+          className="form-label mb-1 block text-xs font-semibold uppercase tracking-wide"
+        >
+          Prioridade
+        </label>
+        <select
+          id="preview-prioridade"
+          className="form-field w-full rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 disabled:opacity-50"
+          value={draft.prioridade ?? "medium"}
+          onChange={(e) =>
+            onChangeDraft?.({
+              ...draft,
+              prioridade: e.target.value,
+            })
+          }
+          disabled={disabled}
+        >
+          {prioridadeOrdem.map((valor) => (
+            <option key={valor} value={valor}>
+              {prioridadeLabel[valor]}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div>
