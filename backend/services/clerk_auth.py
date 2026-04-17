@@ -45,6 +45,18 @@ def _load_jwk_set() -> PyJWKSet:
     return jwk_set
 
 
+def _normalize_origin(value: str) -> str:
+    return value.strip().rstrip("/")
+
+
+def _authorized_azp_origins(settings) -> set[str]:
+    """Origens permitidas no claim `azp`: CLERK_AUTHORIZED_PARTIES + CORS_ORIGINS (ex.: Railway)."""
+    raw: list[str] = []
+    for chunk in (settings.clerk_authorized_parties, settings.cors_origins):
+        raw.extend(p.strip() for p in chunk.split(",") if p.strip() and p.strip() != "*")
+    return {_normalize_origin(p) for p in raw}
+
+
 def decode_clerk_session_token(token: str) -> dict[str, Any]:
     settings = get_settings()
     jwk_set = _load_jwk_set()
@@ -62,10 +74,14 @@ def decode_clerk_session_token(token: str) -> dict[str, Any]:
         algorithms=["RS256"],
         options={"verify_aud": False},
     )
-    parties = [p.strip() for p in settings.clerk_authorized_parties.split(",") if p.strip()]
+    parties = _authorized_azp_origins(settings)
     azp = decoded.get("azp")
-    if parties and azp and azp not in parties:
-        raise jwt.InvalidTokenError("Origem do token (azp) não autorizada")
+    if parties and azp:
+        if _normalize_origin(azp) not in parties:
+            raise jwt.InvalidTokenError(
+                "Origem do token (azp) não autorizada. "
+                "Inclua a URL pública do app em CLERK_AUTHORIZED_PARTIES ou em CORS_ORIGINS (ex.: https://…railway.app)."
+            )
     return decoded
 
 
