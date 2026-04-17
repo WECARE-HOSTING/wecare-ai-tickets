@@ -13,8 +13,11 @@ const emptyDraft = () => ({
 });
 
 export default function App() {
+  const MAX_FILES = 10;
+  const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
   const [step, setStep] = useState("form");
   const [descricao, setDescricao] = useState("");
+  const [files, setFiles] = useState([]);
   const [draft, setDraft] = useState(emptyDraft);
   const [linear, setLinear] = useState(null);
   const [emailError, setEmailError] = useState("");
@@ -40,7 +43,7 @@ export default function App() {
     setError("");
     setLoadingCreate(true);
     try {
-      const res = await createTicket(draft);
+      const res = await createTicket(draft, files);
       setLinear(res.linear);
       setEmailError(
         res.email_sent === false && res.email_error ? String(res.email_error) : ""
@@ -56,10 +59,32 @@ export default function App() {
   function reset() {
     setStep("form");
     setDescricao("");
+    setFiles([]);
     setDraft(emptyDraft());
     setLinear(null);
     setEmailError("");
     setError("");
+  }
+
+  function handleFilesChange(newFiles) {
+    const safeFiles = newFiles.slice(0, MAX_FILES);
+    const tooLarge = safeFiles.find((file) => file.size > MAX_FILE_SIZE_BYTES);
+    if (tooLarge) {
+      setError(
+        `O arquivo "${tooLarge.name}" excede o limite de 10 MB.`
+      );
+      return;
+    }
+    if (newFiles.length > MAX_FILES) {
+      setError(`Você pode anexar no máximo ${MAX_FILES} arquivos.`);
+      return;
+    }
+    setError("");
+    setFiles(safeFiles);
+  }
+
+  function handleRemoveFile(indexToRemove) {
+    setFiles((current) => current.filter((_, index) => index !== indexToRemove));
   }
 
   return (
@@ -87,6 +112,9 @@ export default function App() {
             value={descricao}
             onChange={setDescricao}
             onSubmit={handlePreview}
+            files={files}
+            onFilesChange={handleFilesChange}
+            onRemoveFile={handleRemoveFile}
             disabled={loadingPreview}
             error={error}
           />

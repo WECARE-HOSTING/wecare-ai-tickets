@@ -38,13 +38,19 @@ export async function previewTicket(descricao) {
 
 /**
  * @param {Record<string, unknown>} draft
+ * @param {File[]} files
  * @returns {Promise<{ ok: boolean; linear: object; email_sent: boolean; email_error: string | null }>}
  */
-export async function createTicket(draft) {
+export async function createTicket(draft, files = []) {
+  const formData = new FormData();
+  formData.append("draft", JSON.stringify(draft));
+  for (const file of files) {
+    formData.append("files", file);
+  }
+
   const res = await fetch(`${API_BASE}/tickets/create`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(draft),
+    body: formData,
   });
   if (!res.ok) throw new Error(await parseError(res));
   return res.json();

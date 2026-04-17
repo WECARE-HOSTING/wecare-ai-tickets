@@ -9,6 +9,7 @@ dependencies = [
     "google-cloud-aiplatform>=1.85.0",
     "httpx>=0.28.0",
     "pydantic-settings>=2.6.1",
+    "python-multipart>=0.0.20",
     "python-dotenv>=1.0.1",
     "uvicorn[standard]>=0.32.1",
 ]

@@ -2,8 +2,10 @@ import errno
 import smtplib
 import socket
 from email.header import Header
+from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email import encoders
 from html import escape
 
 from config import get_settings
@@ -58,6 +60,7 @@ def send_ticket_notification(
     descricao_tecnica: str,
     cursor_prompt: str,
     link: str | None,
+    anexos: list[tuple[str, bytes, str]] | None = None,
 ) -> None:
     settings = get_settings()
     if not settings.smtp_host:
@@ -111,6 +114,16 @@ def send_ticket_notification(
     msg["From"] = from_addr
     msg["To"] = to_addr
     msg.attach(MIMEText(body_html, "html", "utf-8"))
+
+    for filename, content, content_type in anexos or []:
+        maintype, _, subtype = content_type.partition("/")
+        if not maintype or not subtype:
+            maintype, subtype = "application", "octet-stream"
+        part = MIMEBase(maintype, subtype)
+        part.set_payload(content)
+        encoders.encode_base64(part)
+        part.add_header("Content-Disposition", "attachment", filename=filename)
+        msg.attach(part)
 
     timeout = max(5, int(settings.smtp_timeout_seconds))
     with _SMTPIPv4(settings.smtp_host, settings.smtp_port, timeout=timeout) as server:
