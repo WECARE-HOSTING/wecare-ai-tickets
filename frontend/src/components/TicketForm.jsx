@@ -57,7 +57,11 @@ export default function TicketForm({
           multiple
           accept={acceptedTypes}
           disabled={disabled}
-          onChange={(e) => onFilesChange?.(Array.from(e.target.files || []))}
+          onChange={(e) => {
+            const picked = Array.from(e.target.files || []);
+            onFilesChange?.(picked);
+            e.target.value = "";
+          }}
           className="file-input block w-full rounded-xl px-3 py-2 text-sm file:mr-3 file:rounded-lg file:border-0 file:px-3 file:py-1.5 file:text-xs file:font-semibold disabled:opacity-50"
         />
         <p className="form-help mt-2 text-xs">

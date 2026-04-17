@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createTicket, previewTicket } from "./api/tickets.js";
 import AiPreview from "./components/AiPreview.jsx";
 import TicketForm from "./components/TicketForm.jsx";
@@ -29,6 +29,10 @@ export default function App() {
   const [step, setStep] = useState("form");
   const [descricao, setDescricao] = useState("");
   const [files, setFiles] = useState([]);
+  const filesRef = useRef(files);
+  useEffect(() => {
+    filesRef.current = files;
+  }, [files]);
   const [draft, setDraft] = useState(emptyDraft);
   const [linear, setLinear] = useState(null);
   const [emailError, setEmailError] = useState("");
@@ -89,20 +93,22 @@ export default function App() {
   }
 
   function handleFilesChange(newFiles) {
-    const safeFiles = newFiles.slice(0, MAX_FILES);
-    const tooLarge = safeFiles.find((file) => file.size > MAX_FILE_SIZE_BYTES);
+    if (!newFiles?.length) return;
+    const current = filesRef.current;
+    const merged = [...current, ...newFiles];
+    const tooLarge = merged.find((file) => file.size > MAX_FILE_SIZE_BYTES);
     if (tooLarge) {
       setError(
         `O arquivo "${tooLarge.name}" excede o limite de 10 MB.`
       );
       return;
     }
-    if (newFiles.length > MAX_FILES) {
+    if (merged.length > MAX_FILES) {
       setError(`Você pode anexar no máximo ${MAX_FILES} arquivos.`);
       return;
     }
     setError("");
-    setFiles(safeFiles);
+    setFiles(merged);
   }
 
   function handleRemoveFile(indexToRemove) {
