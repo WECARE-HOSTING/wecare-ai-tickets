@@ -28,7 +28,7 @@ export default function TicketForm({
       <div>
         <label
           htmlFor="descricao"
-          className="mb-2 block text-sm font-medium text-zinc-300"
+          className="form-label mb-2 block text-sm font-medium"
         >
           Descreva o problema ou pedido
         </label>
@@ -40,13 +40,13 @@ export default function TicketForm({
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled}
           placeholder="Ex.: Preciso de uma nova visão consolidada de comissão por parceiro, com total mensal e detalhamento por contrato."
-          className="w-full resize-y rounded-xl border border-wecare-700/50 bg-zinc-900/80 px-4 py-3 text-sm text-zinc-100 shadow-inner outline-none ring-wecare-500/30 placeholder:text-zinc-500 focus:border-wecare-500 focus:ring-2 disabled:opacity-50"
+          className="form-field w-full resize-y rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 disabled:opacity-50"
         />
       </div>
       <div>
         <label
           htmlFor="files"
-          className="mb-2 block text-sm font-medium text-zinc-300"
+          className="form-label mb-2 block text-sm font-medium"
         >
           Anexos (prints, PDF, TXT e outros)
         </label>
@@ -58,9 +58,9 @@ export default function TicketForm({
           accept={acceptedTypes}
           disabled={disabled}
           onChange={(e) => onFilesChange?.(Array.from(e.target.files || []))}
-          className="block w-full rounded-xl border border-wecare-700/50 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-200 file:mr-3 file:rounded-lg file:border-0 file:bg-wecare-700 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white hover:file:bg-wecare-600 disabled:opacity-50"
+          className="file-input block w-full rounded-xl px-3 py-2 text-sm file:mr-3 file:rounded-lg file:border-0 file:px-3 file:py-1.5 file:text-xs file:font-semibold disabled:opacity-50"
         />
-        <p className="mt-2 text-xs text-zinc-500">
+        <p className="form-help mt-2 text-xs">
           Máx. 10 arquivos, até 10 MB por arquivo.
         </p>
         {files?.length ? (
@@ -68,7 +68,7 @@ export default function TicketForm({
             {files.map((file, index) => (
               <li
                 key={`${file.name}-${file.size}-${index}`}
-                className="flex items-center justify-between rounded-lg border border-zinc-700/70 bg-zinc-900/60 px-3 py-2 text-xs text-zinc-200"
+                className="file-chip flex items-center justify-between rounded-lg px-3 py-2 text-xs"
               >
                 <span className="truncate pr-3">
                   {file.name} ({formatSize(file.size)})
@@ -77,7 +77,7 @@ export default function TicketForm({
                   type="button"
                   onClick={() => onRemoveFile?.(index)}
                   disabled={disabled}
-                  className="rounded-md border border-zinc-600 px-2 py-1 text-[11px] font-medium text-zinc-300 hover:bg-zinc-800 disabled:opacity-50"
+                  className="chip-action rounded-md px-2 py-1 text-[11px] font-medium disabled:opacity-50"
                 >
                   Remover
                 </button>
@@ -87,14 +87,14 @@ export default function TicketForm({
         ) : null}
       </div>
       {error ? (
-        <p className="rounded-lg border border-red-500/40 bg-red-950/40 px-3 py-2 text-sm text-red-200">
+        <p className="form-error rounded-lg px-3 py-2 text-sm">
           {error}
         </p>
       ) : null}
       <button
         type="submit"
         disabled={disabled || !value.trim()}
-        className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-wecare-600 to-wecare-orange px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-wecare-950/45 transition hover:from-wecare-500 hover:to-wecare-orange/95 disabled:cursor-not-allowed disabled:opacity-40"
+        className="primary-btn inline-flex items-center justify-center rounded-xl px-5 py-2.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40"
       >
         {disabled ? "Gerando preview com IA…" : "Gerar preview com IA"}
       </button>

@@ -1,7 +1,18 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createTicket, previewTicket } from "./api/tickets.js";
 import AiPreview from "./components/AiPreview.jsx";
 import TicketForm from "./components/TicketForm.jsx";
+
+const THEME_STORAGE_KEY = "wecare-theme";
+
+function getInitialTheme() {
+  if (typeof window === "undefined") return "dark";
+  const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+  if (savedTheme === "dark" || savedTheme === "light") return savedTheme;
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+}
 
 const emptyDraft = () => ({
   tipo: "Dúvida",
@@ -24,6 +35,17 @@ export default function App() {
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [loadingCreate, setLoadingCreate] = useState(false);
   const [error, setError] = useState("");
+  const [theme, setTheme] = useState(getInitialTheme);
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    document.documentElement.style.colorScheme = theme;
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }, [theme]);
+
+  function toggleTheme() {
+    setTheme((currentTheme) => (currentTheme === "dark" ? "light" : "dark"));
+  }
 
   async function handlePreview() {
     setError("");
@@ -88,25 +110,36 @@ export default function App() {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-3xl flex-col px-4 py-10 sm:px-6 lg:px-8">
-      <header className="mb-10 text-center">
-        <img
-          src="/logo.png"
-          alt="WeCare Hosting"
-          className="mx-auto h-14 w-auto max-w-full object-contain sm:h-16"
-        />
-        <p className="mb-1 mt-4 text-xs font-semibold uppercase tracking-[0.2em] text-wecare-400">
+    <div className="app-page mx-auto flex min-h-screen max-w-3xl flex-col px-4 py-10 sm:px-6 lg:px-8">
+      <header className="app-header mb-10 rounded-2xl p-4 sm:p-5">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <img
+            src="/logo.png"
+            alt="WeCare Hosting"
+            className="h-12 w-auto max-w-full object-contain sm:h-14"
+          />
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="theme-toggle-btn"
+            aria-label={`Ativar tema ${theme === "dark" ? "claro" : "escuro"}`}
+            title={`Ativar tema ${theme === "dark" ? "claro" : "escuro"}`}
+          >
+            <span aria-hidden="true">{theme === "dark" ? "☀️" : "🌙"}</span>
+          </button>
+        </div>
+        <p className="app-brand mb-1 text-xs font-semibold uppercase tracking-[0.2em]">
           WeCare Hosting
         </p>
-        <h1 className="bg-gradient-to-r from-white via-wecare-100 to-wecare-orange bg-clip-text text-3xl font-bold tracking-tight text-transparent sm:text-4xl">
+        <h1 className="app-title text-3xl font-bold tracking-tight sm:text-4xl">
           Tickets de TI com IA
         </h1>
-        <p className="mt-3 text-sm text-zinc-400">
+        <p className="app-subtitle mt-3 text-sm">
           Descreva em texto livre, revise o que a IA propõe e abra a issue no Linear com notificação por e-mail.
         </p>
       </header>
 
-      <main className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 shadow-2xl shadow-black/40 ring-1 ring-wecare-800/25 backdrop-blur-sm sm:p-8">
+      <main className="app-surface rounded-2xl p-6 sm:p-8">
         {step === "form" ? (
           <TicketForm
             value={descricao}
@@ -136,14 +169,14 @@ export default function App() {
 
         {step === "done" ? (
           <div className="space-y-8">
-            <div className="rounded-xl border border-wecare-teal/35 bg-wecare-teal/10 px-4 py-3 text-sm text-zinc-100">
+            <div className="success-alert rounded-xl px-4 py-3 text-sm">
               <p className="font-semibold text-wecare-teal">Ticket criado com sucesso.</p>
               {linear?.url ? (
                 <a
                   href={linear.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-2 inline-block text-wecare-300 underline decoration-wecare-500/60 underline-offset-2 hover:text-wecare-200"
+                  className="success-link mt-2 inline-block underline underline-offset-2"
                 >
                   Abrir issue no Linear ({linear.identifier || linear.id})
                 </a>
@@ -151,17 +184,17 @@ export default function App() {
             </div>
             {emailError ? (
               <div
-                className="rounded-xl border border-amber-600/40 bg-amber-950/40 px-4 py-3 text-sm text-amber-100"
+                className="warning-alert rounded-xl px-4 py-3 text-sm"
                 role="status"
               >
-                <p className="font-semibold text-amber-200">E-mail de notificação não enviado</p>
-                <p className="mt-1 text-amber-100/90">{emailError}</p>
+                <p className="font-semibold">E-mail de notificação não enviado</p>
+                <p className="mt-1">{emailError}</p>
               </div>
             ) : null}
             <button
               type="button"
               onClick={reset}
-              className="rounded-xl border border-zinc-600 bg-zinc-900 px-4 py-2 text-sm font-medium text-zinc-200 hover:bg-zinc-800"
+              className="secondary-btn rounded-xl px-4 py-2 text-sm font-medium"
             >
               Abrir outro ticket
             </button>
@@ -169,7 +202,7 @@ export default function App() {
         ) : null}
       </main>
 
-      <footer className="mt-auto pt-10 text-center text-xs text-zinc-600">
+      <footer className="app-footer mt-auto pt-10 text-center text-xs">
         Demo stateless · Linear + SMTP
       </footer>
     </div>
