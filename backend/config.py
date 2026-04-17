@@ -35,6 +35,13 @@ class Settings(BaseSettings):
     linear_api_key: str = ""
     linear_team_id: str = ""
     linear_project_id: str = ""
+    linear_webhook_secret: str = ""
+
+    clerk_secret_key: str = ""
+    clerk_jwks_url: str = ""
+    clerk_authorized_parties: str = "http://localhost:5173"
+
+    tickets_db_path: str = ""
 
     cors_origins: str = "http://localhost:5173"
 

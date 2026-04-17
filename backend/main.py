@@ -9,6 +9,8 @@ from fastapi.staticfiles import StaticFiles
 
 from config import get_settings
 from routes.tickets import router as tickets_router
+from routes.webhooks_linear import router as linear_webhook_router
+from services.db import init_db
 
 _repo_root = Path(__file__).resolve().parent.parent
 load_dotenv(_repo_root / ".env")
@@ -17,6 +19,7 @@ load_dotenv(Path(__file__).resolve().parent / ".env")
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    init_db()
     yield
 
 
@@ -38,6 +41,7 @@ app.add_middleware(
 )
 
 app.include_router(tickets_router)
+app.include_router(linear_webhook_router, prefix="/api")
 
 
 @app.get("/health")
