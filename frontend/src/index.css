@@ -369,3 +369,39 @@ body,
   border-color: #fdba74;
 }
 
+.login-page {
+  color: var(--text-main);
+}
+
+.login-card {
+  border: 1px solid var(--surface-border);
+  background: var(--surface-bg);
+  box-shadow: 0 20px 35px -20px var(--surface-shadow);
+}
+
+.google-signin-btn {
+  background: #e55a4f;
+  font-family: "Poppins", ui-sans-serif, system-ui, sans-serif;
+}
+
+.google-signin-btn:hover {
+  background: #d64438;
+}
+
+.nav-pill-idle {
+  color: var(--text-muted);
+  border: 1px solid transparent;
+}
+
+.nav-pill-idle:hover {
+  color: var(--text-main);
+  background: var(--secondary-bg-hover);
+}
+
+.nav-pill-active {
+  color: var(--text-main);
+  border: 1px solid var(--input-border);
+  background: var(--chip-bg);
+  box-shadow: 0 0 0 1px rgba(229, 90, 79, 0.2);
+}
+

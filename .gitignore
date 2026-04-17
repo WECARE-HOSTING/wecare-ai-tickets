@@ -8,6 +8,7 @@ __pycache__/
 dist/
 node_modules/
 frontend/dist/
+backend/data/
 *.egg-info/
 .DS_Store
 .env

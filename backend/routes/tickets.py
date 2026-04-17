@@ -1,14 +1,14 @@
-import logging
 from json import JSONDecodeError, loads
 from typing import Literal
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 
-from services import ai, email as email_service
+from services import ai
+from services import db as db_service
 from services import linear as linear_service
+from services.clerk_auth import ClerkAuthUser, get_clerk_user
 
-logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/tickets", tags=["tickets"])
 MAX_FILES = 10
 MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024
@@ -39,7 +39,7 @@ def _validate_draft(data: dict) -> TicketDraft:
 
 
 @router.post("/preview")
-def preview_ticket(body: TicketPreviewRequest):
+def preview_ticket(body: TicketPreviewRequest, _user: ClerkAuthUser = Depends(get_clerk_user)):
     try:
         raw = ai.enrich_ticket_description(body.descricao)
         draft = _validate_draft(raw)
@@ -50,10 +50,27 @@ def preview_ticket(body: TicketPreviewRequest):
         raise HTTPException(status_code=502, detail=f"Falha ao processar com IA: {e}") from e
 
 
+@router.get("/mine")
+def list_my_tickets(user: ClerkAuthUser = Depends(get_clerk_user)):
+    rows = db_service.list_tickets_for_requester(user.user_id)
+    unread = db_service.count_unread_completed(user.user_id)
+    return {
+        "tickets": [r.to_api_dict() for r in rows],
+        "unread_completed": unread,
+    }
+
+
+@router.post("/mine/mark-viewed")
+def mark_my_tickets_viewed(user: ClerkAuthUser = Depends(get_clerk_user)):
+    updated = db_service.mark_all_viewed_for_requester(user.user_id)
+    return {"ok": True, "updated": updated}
+
+
 @router.post("/create")
 async def create_ticket(
     draft_payload: str = Form(..., alias="draft"),
     files: list[UploadFile] = File(default_factory=list),
+    user: ClerkAuthUser = Depends(get_clerk_user),
 ):
     try:
         draft_data = loads(draft_payload)
@@ -93,6 +110,15 @@ async def create_ticket(
         itens = "\n".join(f"- {name}" for name, _, _ in attachments)
         anexos_markdown = f"\n\n## Anexos enviados\n\n{itens}"
 
+    solicitante_md = (
+        "\n\n---\n\n## Solicitante (Clerk / Google)\n\n"
+        f"- **Nome:** {user.full_name}\n"
+        f"- **E-mail:** {user.email}\n"
+        f"- **Clerk user id:** `{user.user_id}`\n"
+    )
+    if user.image_url:
+        solicitante_md += f"- **Avatar:** {user.image_url}\n"
+
     descricao_issue = (
         f"**Módulo afetado:** {draft.modulo_afetado}\n\n"
         f"{draft.descricao_tecnica}\n\n"
@@ -100,6 +126,7 @@ async def create_ticket(
         "---\n\n"
         "## Prompt para Cursor (IA)\n\n"
         f"{draft.cursor_prompt}"
+        f"{solicitante_md}"
     )
     try:
         issue = linear_service.create_issue(
@@ -113,31 +140,40 @@ async def create_ticket(
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Falha ao criar issue no Linear: {e}") from e
 
-    email_error: str | None = None
+    issue_id = issue.get("id") or ""
+    if not issue_id:
+        raise HTTPException(status_code=502, detail="Linear não retornou id da issue.")
+
     try:
-        email_service.send_ticket_notification(
-            tipo=draft.tipo,
+        snap = linear_service.get_issue_snapshot(issue_id)
+    except Exception:
+        snap = {
+            "status": "—",
+            "last_comment_body": None,
+            "last_comment_at": None,
+        }
+
+    try:
+        db_service.insert_ticket(
+            linear_issue_id=issue_id,
+            linear_identifier=issue.get("identifier"),
+            linear_url=issue.get("url"),
             titulo=draft.titulo,
-            prioridade=draft.prioridade,
-            modulo_afetado=draft.modulo_afetado,
-            descricao_tecnica=draft.descricao_tecnica,
-            cursor_prompt=draft.cursor_prompt,
-            link=issue.get("url"),
-            anexos=attachments,
+            status=str(snap.get("status") or "—"),
+            requester_email=user.email,
+            requester_name=user.full_name,
+            requester_clerk_id=user.user_id,
+            requester_avatar=user.image_url or None,
+            last_comment_body=snap.get("last_comment_body"),
+            last_comment_at=snap.get("last_comment_at"),
         )
-    except ValueError as e:
-        email_error = str(e)
-        logger.warning("Notificação por e-mail não enviada (config): %s", email_error)
     except Exception as e:
-        email_error = str(e)
-        logger.exception(
-            "Issue criada no Linear (%s), mas falha ao enviar e-mail.",
-            issue.get("url"),
-        )
+        raise HTTPException(
+            status_code=500,
+            detail=f"Issue criada no Linear, mas falhou ao salvar localmente: {e}",
+        ) from e
 
     return {
         "ok": True,
         "linear": issue,
-        "email_sent": email_error is None,
-        "email_error": email_error,
     }

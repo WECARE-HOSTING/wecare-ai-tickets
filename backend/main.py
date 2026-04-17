@@ -1,14 +1,17 @@
+import json
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from config import get_settings
 from routes.tickets import router as tickets_router
+from routes.webhooks_linear import router as linear_webhook_router
+from services.db import init_db
 
 _repo_root = Path(__file__).resolve().parent.parent
 load_dotenv(_repo_root / ".env")
@@ -17,12 +20,13 @@ load_dotenv(Path(__file__).resolve().parent / ".env")
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    init_db()
     yield
 
 
 app = FastAPI(
     title="WeCare AI Tickets",
-    description="Demo de tickets de TI com Gemini (Vertex AI), Linear e e-mail.",
+    description="Demo de tickets de TI com Gemini (Vertex AI) e Linear.",
     version="0.1.0",
     lifespan=lifespan,
 )
@@ -38,11 +42,23 @@ app.add_middleware(
 )
 
 app.include_router(tickets_router)
+app.include_router(linear_webhook_router, prefix="/api")
 
 
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/clerk-frontend-config.js")
+def clerk_frontend_config():
+    """Expõe a chave publicável Clerk para o bundle estático (Railway: use CLERK_PUBLISHABLE_KEY)."""
+    pk = get_settings().clerk_publishable_key.strip()
+    body = "window.__CLERK_PUBLISHABLE_KEY__=" + (json.dumps(pk) if pk else "''") + ";"
+    return Response(
+        body,
+        media_type="application/javascript; charset=utf-8",
+    )
 
 
 _frontend_dist = _repo_root / "frontend" / "dist"

@@ -87,3 +87,60 @@ def create_issue(
         "title": issue.get("title"),
         "url": issue.get("url"),
     }
+
+
+def get_issue_snapshot(issue_id: str) -> dict[str, Any]:
+    """Estado atual e último comentário (por data) da issue no Linear."""
+    query = """
+    query IssueSnapshot($id: String!) {
+      issue(id: $id) {
+        id
+        identifier
+        title
+        url
+        state { name type }
+        comments(first: 30) {
+          nodes { body createdAt }
+        }
+      }
+    }
+    """
+    payload = {"query": query, "variables": {"id": issue_id}}
+    with httpx.Client(timeout=30.0) as client:
+        resp = client.post(LINEAR_GRAPHQL_URL, json=payload, headers=_headers())
+        resp.raise_for_status()
+        body = resp.json()
+
+    if "errors" in body and body["errors"]:
+        msgs = "; ".join(e.get("message", str(e)) for e in body["errors"])
+        raise RuntimeError(f"Linear API: {msgs}")
+
+    issue = (body.get("data") or {}).get("issue") or {}
+    if not issue.get("id"):
+        raise RuntimeError("Issue não encontrada no Linear.")
+
+    state = issue.get("state") or {}
+    status_name = (state.get("name") or "").strip() or "—"
+    nodes = ((issue.get("comments") or {}).get("nodes")) or []
+    last_body: str | None = None
+    last_at: str | None = None
+    if nodes:
+        sorted_nodes = sorted(
+            nodes,
+            key=lambda c: c.get("createdAt") or "",
+            reverse=True,
+        )
+        top = sorted_nodes[0]
+        raw_body = (top.get("body") or "").strip()
+        last_body = raw_body[:2000] if raw_body else None
+        last_at = (top.get("createdAt") or "").strip() or None
+
+    return {
+        "linear_issue_id": issue.get("id"),
+        "linear_identifier": issue.get("identifier"),
+        "linear_url": issue.get("url"),
+        "titulo": issue.get("title") or "",
+        "status": status_name,
+        "last_comment_body": last_body,
+        "last_comment_at": last_at,
+    }

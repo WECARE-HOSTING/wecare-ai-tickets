@@ -23,13 +23,30 @@ async function parseError(res) {
 }
 
 /**
+ * @param {() => Promise<string | null>} [getToken]
+ * @returns {Promise<Record<string, string>>}
+ */
+async function authHeaders(getToken) {
+  const headers = {};
+  if (typeof getToken === "function") {
+    const token = await getToken();
+    if (token) headers.Authorization = `Bearer ${token}`;
+  }
+  return headers;
+}
+
+/**
  * @param {string} descricao
+ * @param {() => Promise<string | null>} getToken
  * @returns {Promise<Record<string, unknown>>}
  */
-export async function previewTicket(descricao) {
+export async function previewTicket(descricao, getToken) {
   const res = await fetch(`${API_BASE}/tickets/preview`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(await authHeaders(getToken)),
+    },
     body: JSON.stringify({ descricao }),
   });
   if (!res.ok) throw new Error(await parseError(res));
@@ -39,9 +56,10 @@ export async function previewTicket(descricao) {
 /**
  * @param {Record<string, unknown>} draft
  * @param {File[]} files
- * @returns {Promise<{ ok: boolean; linear: object; email_sent: boolean; email_error: string | null }>}
+ * @param {() => Promise<string | null>} getToken
+ * @returns {Promise<{ ok: boolean; linear: object }>}
  */
-export async function createTicket(draft, files = []) {
+export async function createTicket(draft, files = [], getToken) {
   const formData = new FormData();
   formData.append("draft", JSON.stringify(draft));
   for (const file of files) {
@@ -50,7 +68,33 @@ export async function createTicket(draft, files = []) {
 
   const res = await fetch(`${API_BASE}/tickets/create`, {
     method: "POST",
+    headers: await authHeaders(getToken),
     body: formData,
+  });
+  if (!res.ok) throw new Error(await parseError(res));
+  return res.json();
+}
+
+/**
+ * @param {() => Promise<string | null>} getToken
+ * @returns {Promise<{ tickets: object[]; unread_completed: number }>}
+ */
+export async function listMyTickets(getToken) {
+  const res = await fetch(`${API_BASE}/tickets/mine`, {
+    headers: await authHeaders(getToken),
+  });
+  if (!res.ok) throw new Error(await parseError(res));
+  return res.json();
+}
+
+/**
+ * @param {() => Promise<string | null>} getToken
+ * @returns {Promise<{ ok: boolean; updated: number }>}
+ */
+export async function markMyTicketsViewed(getToken) {
+  const res = await fetch(`${API_BASE}/tickets/mine/mark-viewed`, {
+    method: "POST",
+    headers: await authHeaders(getToken),
   });
   if (!res.ok) throw new Error(await parseError(res));
   return res.json();

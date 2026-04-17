@@ -1,6 +1,6 @@
 # 🤖 WeCare AI Tickets
 
-> Demo funcional de abertura inteligente de tickets de TI — o usuário descreve o problema em linguagem natural e a IA estrutura, classifica, cria a issue no Linear e notifica por e-mail automaticamente.
+> Demo funcional de abertura inteligente de tickets de TI — o usuário descreve o problema em linguagem natural e a IA estrutura, classifica e cria a issue no Linear.
 
 ---
 
@@ -23,7 +23,6 @@
 - **IA principal**: Claude (Anthropic API) `claude-sonnet-4-20250514`
 - **IA fallback**: Gemini 2.5 Flash via Vertex AI *(ativado automaticamente se Claude falhar)*
 - **Tickets**: Linear API (GraphQL)
-- **Notificações**: E-mail via SMTP (Gmail)
 - **Stateless**: sem banco de dados
 
 ---
@@ -47,9 +46,7 @@ Usuário revisa no frontend
         ↓
 POST /tickets/create
         ↓
-  ┌─────────────────┐   ┌──────────────────────┐
-  │  Issue no Linear │   │  E-mail de notificação│
-  └─────────────────┘   └──────────────────────┘
+  Issue no Linear
         ↓
 Frontend exibe cursor_prompt com botão de copiar
 ```
@@ -62,7 +59,6 @@ Frontend exibe cursor_prompt com botão de copiar
 - Node.js 20+
 - Conta no [Linear](https://linear.app) com Personal API Key
 - Anthropic API Key **e/ou** GCP com Vertex AI habilitado
-- Conta Gmail com [App Password](https://myaccount.google.com/apppasswords) gerada
 
 ---
 
@@ -90,13 +86,6 @@ GOOGLE_APPLICATION_CREDENTIALS=service_account.json
 LINEAR_API_KEY=lin_api_...
 LINEAR_TEAM_ID=uuid-do-time
 LINEAR_PROJECT_ID=uuid-do-projeto-atendimentos-ti
-
-# ── E-mail (Gmail SMTP) ───────────────────────────────
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=seu@gmail.com
-SMTP_PASS=app-password-16-chars
-EMAIL_TO=destino@empresa.com.br
 ```
 
 > ⚠️ Se usar Gemini, coloque o `service_account.json` na raiz do projeto (não versionar).
@@ -171,8 +160,7 @@ wecare-ai-tickets/
 │   ├── routes/tickets.py
 │   └── services/
 │       ├── ai.py        # Claude + fallback Gemini
-│       ├── linear.py    # Criação de issues via GraphQL
-│       └── email.py     # Notificação SMTP
+│       └── linear.py    # Criação de issues via GraphQL
 ├── frontend/
 │   └── src/
 │       ├── App.jsx

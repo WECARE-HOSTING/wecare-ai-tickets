@@ -35,13 +35,15 @@ class Settings(BaseSettings):
     linear_api_key: str = ""
     linear_team_id: str = ""
     linear_project_id: str = ""
+    linear_webhook_secret: str = ""
 
-    smtp_host: str = ""
-    smtp_port: int = 587
-    smtp_user: str = ""
-    smtp_pass: str = ""
-    smtp_timeout_seconds: int = 20
-    email_to: str = "felipe@wecarehosting.com.br"
+    clerk_secret_key: str = ""
+    # pk_... — exposta em /clerk-frontend-config.js (Railway sem VITE no build do front)
+    clerk_publishable_key: str = ""
+    clerk_jwks_url: str = ""
+    clerk_authorized_parties: str = "http://localhost:5173"
+
+    tickets_db_path: str = ""
 
     cors_origins: str = "http://localhost:5173"
 
