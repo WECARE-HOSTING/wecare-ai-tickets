@@ -27,7 +27,7 @@ function EntrarRoute() {
         <LoginPage />
       </SignedOut>
       <SignedIn>
-        <Navigate to="/meus-chamados" replace />
+        <Navigate to="/" replace />
       </SignedIn>
     </>
   );

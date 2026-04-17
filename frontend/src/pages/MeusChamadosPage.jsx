@@ -1,6 +1,6 @@
 import { useAuth } from "@clerk/clerk-react";
 import { useEffect, useState } from "react";
-import { useOutletContext } from "react-router-dom";
+import { Link, useOutletContext } from "react-router-dom";
 import { listMyTickets, markMyTicketsViewed } from "../api/tickets.js";
 
 function formatDate(iso) {
@@ -67,8 +67,17 @@ export default function MeusChamadosPage() {
 
   if (!tickets.length) {
     return (
-      <div className="app-surface rounded-2xl p-8 text-center text-sm text-[var(--text-muted)]">
-        Você ainda não possui chamados registrados aqui. Abra um ticket na página inicial.
+      <div className="app-surface rounded-2xl p-8 text-center">
+        <p className="text-sm text-[var(--text-muted)]">
+          Ainda não há chamados associados à tua conta. O formulário com descrição e anexos fica em{" "}
+          <strong className="text-[var(--text-main)]">Novo chamado</strong> (menu em cima).
+        </p>
+        <Link
+          to="/"
+          className="primary-btn mt-6 inline-flex items-center justify-center rounded-xl px-6 py-3 text-sm font-semibold"
+        >
+          Abrir novo chamado
+        </Link>
       </div>
     );
   }

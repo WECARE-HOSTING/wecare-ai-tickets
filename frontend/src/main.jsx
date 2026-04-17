@@ -37,8 +37,8 @@ root.render(
         publishableKey={clerkKey}
         signInUrl="/entrar"
         signUpUrl="/entrar"
-        afterSignInUrl="/meus-chamados"
-        afterSignUpUrl="/meus-chamados"
+        afterSignInUrl="/"
+        afterSignUpUrl="/"
       >
         <BrowserRouter>
           <App />

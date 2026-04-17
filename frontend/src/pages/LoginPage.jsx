@@ -9,7 +9,7 @@ export default function LoginPage() {
     await signIn.authenticateWithRedirect({
       strategy: "oauth_google",
       redirectUrl: `${origin}/sso-callback`,
-      redirectUrlComplete: `${origin}/meus-chamados`,
+      redirectUrlComplete: `${origin}/`,
     });
   }
 
