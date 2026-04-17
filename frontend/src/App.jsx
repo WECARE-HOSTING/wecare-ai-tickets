@@ -35,7 +35,6 @@ export default function App() {
   }, [files]);
   const [draft, setDraft] = useState(emptyDraft);
   const [linear, setLinear] = useState(null);
-  const [emailError, setEmailError] = useState("");
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [loadingCreate, setLoadingCreate] = useState(false);
   const [error, setError] = useState("");
@@ -71,9 +70,6 @@ export default function App() {
     try {
       const res = await createTicket(draft, files);
       setLinear(res.linear);
-      setEmailError(
-        res.email_sent === false && res.email_error ? String(res.email_error) : ""
-      );
       setStep("done");
     } catch (e) {
       setError(e.message || "Falha ao criar ticket.");
@@ -88,7 +84,6 @@ export default function App() {
     setFiles([]);
     setDraft(emptyDraft());
     setLinear(null);
-    setEmailError("");
     setError("");
   }
 
@@ -141,7 +136,7 @@ export default function App() {
           Tickets de TI com IA
         </h1>
         <p className="app-subtitle mt-3 text-sm">
-          Descreva em texto livre, revise o que a IA propõe e abra a issue no Linear com notificação por e-mail.
+          Descreva em texto livre, revise o que a IA propõe e abra a issue no Linear.
         </p>
       </header>
 
@@ -188,15 +183,6 @@ export default function App() {
                 </a>
               ) : null}
             </div>
-            {emailError ? (
-              <div
-                className="warning-alert rounded-xl px-4 py-3 text-sm"
-                role="status"
-              >
-                <p className="font-semibold">E-mail de notificação não enviado</p>
-                <p className="mt-1">{emailError}</p>
-              </div>
-            ) : null}
             <button
               type="button"
               onClick={reset}
@@ -209,7 +195,7 @@ export default function App() {
       </main>
 
       <footer className="app-footer mt-auto pt-10 text-center text-xs">
-        Demo stateless · Linear + SMTP
+        Demo stateless · Linear
       </footer>
     </div>
   );

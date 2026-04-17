@@ -39,7 +39,7 @@ export async function previewTicket(descricao) {
 /**
  * @param {Record<string, unknown>} draft
  * @param {File[]} files
- * @returns {Promise<{ ok: boolean; linear: object; email_sent: boolean; email_error: string | null }>}
+ * @returns {Promise<{ ok: boolean; linear: object }>}
  */
 export async function createTicket(draft, files = []) {
   const formData = new FormData();

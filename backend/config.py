@@ -36,13 +36,6 @@ class Settings(BaseSettings):
     linear_team_id: str = ""
     linear_project_id: str = ""
 
-    smtp_host: str = ""
-    smtp_port: int = 587
-    smtp_user: str = ""
-    smtp_pass: str = ""
-    smtp_timeout_seconds: int = 20
-    email_to: str = "felipe@wecarehosting.com.br"
-
     cors_origins: str = "http://localhost:5173"
 
 

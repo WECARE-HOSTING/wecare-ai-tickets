@@ -1,14 +1,12 @@
-import logging
 from json import JSONDecodeError, loads
 from typing import Literal
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 
-from services import ai, email as email_service
+from services import ai
 from services import linear as linear_service
 
-logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/tickets", tags=["tickets"])
 MAX_FILES = 10
 MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024
@@ -113,31 +111,7 @@ async def create_ticket(
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Falha ao criar issue no Linear: {e}") from e
 
-    email_error: str | None = None
-    try:
-        email_service.send_ticket_notification(
-            tipo=draft.tipo,
-            titulo=draft.titulo,
-            prioridade=draft.prioridade,
-            modulo_afetado=draft.modulo_afetado,
-            descricao_tecnica=draft.descricao_tecnica,
-            cursor_prompt=draft.cursor_prompt,
-            link=issue.get("url"),
-            anexos=attachments,
-        )
-    except ValueError as e:
-        email_error = str(e)
-        logger.warning("Notificação por e-mail não enviada (config): %s", email_error)
-    except Exception as e:
-        email_error = str(e)
-        logger.exception(
-            "Issue criada no Linear (%s), mas falha ao enviar e-mail.",
-            issue.get("url"),
-        )
-
     return {
         "ok": True,
         "linear": issue,
-        "email_sent": email_error is None,
-        "email_error": email_error,
     }
