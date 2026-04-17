@@ -1,10 +1,11 @@
+import json
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from config import get_settings
@@ -47,6 +48,17 @@ app.include_router(linear_webhook_router, prefix="/api")
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/clerk-frontend-config.js")
+def clerk_frontend_config():
+    """Expõe a chave publicável Clerk para o bundle estático (Railway: use CLERK_PUBLISHABLE_KEY)."""
+    pk = get_settings().clerk_publishable_key.strip()
+    body = "window.__CLERK_PUBLISHABLE_KEY__=" + (json.dumps(pk) if pk else "''") + ";"
+    return Response(
+        body,
+        media_type="application/javascript; charset=utf-8",
+    )
 
 
 _frontend_dist = _repo_root / "frontend" / "dist"
