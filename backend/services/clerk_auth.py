@@ -84,16 +84,78 @@ class ClerkAuthUser:
         return name or self.email.split("@", maxsplit=1)[0]
 
 
+def _email_from_jwt_payload(payload: dict[str, Any]) -> str:
+    for key in ("email", "oauth_email", "primary_email_address"):
+        raw = payload.get(key)
+        if isinstance(raw, str) and "@" in raw:
+            return raw.strip().lower()
+    return ""
+
+
+def _fetch_clerk_user_from_api(user_id: str) -> dict[str, Any] | None:
+    sk = get_settings().clerk_secret_key.strip()
+    if not sk:
+        return None
+    try:
+        with httpx.Client(timeout=15.0) as client:
+            resp = client.get(
+                f"https://api.clerk.com/v1/users/{user_id}",
+                headers={"Authorization": f"Bearer {sk}"},
+            )
+            resp.raise_for_status()
+            return resp.json()
+    except Exception:
+        return None
+
+
+def _email_from_clerk_api_user(body: dict[str, Any]) -> str:
+    primary_id = body.get("primary_email_address_id")
+    addresses = body.get("email_addresses") or []
+    if not isinstance(addresses, list):
+        return ""
+    primary_email = ""
+    fallback = ""
+    for addr in addresses:
+        if not isinstance(addr, dict):
+            continue
+        em = (addr.get("email_address") or "").strip().lower()
+        if not em:
+            continue
+        if not fallback:
+            fallback = em
+        if primary_id and addr.get("id") == primary_id:
+            primary_email = em
+            break
+    return primary_email or fallback
+
+
 def user_from_claims(payload: dict[str, Any]) -> ClerkAuthUser:
     sub = (payload.get("sub") or "").strip()
     if not sub:
         raise ValueError("Token sem subject (sub)")
-    email = (payload.get("email") or "").strip().lower()
-    if not email:
-        raise ValueError("Token sem e-mail")
+    email = _email_from_jwt_payload(payload)
     fn = (payload.get("first_name") or payload.get("given_name") or "").strip()
     ln = (payload.get("last_name") or payload.get("family_name") or "").strip()
     img = (payload.get("image_url") or payload.get("picture") or "").strip()
+
+    if not email or not fn or not ln or not img:
+        api = _fetch_clerk_user_from_api(sub)
+        if api:
+            if not email:
+                email = _email_from_clerk_api_user(api)
+            if not fn:
+                fn = (api.get("first_name") or "").strip()
+            if not ln:
+                ln = (api.get("last_name") or "").strip()
+            if not img:
+                img = (api.get("image_url") or "").strip()
+
+    if not email:
+        raise ValueError(
+            "Token sem e-mail e não foi possível obter via API Clerk. "
+            "Confirme CLERK_SECRET_KEY, ou no Dashboard Clerk em Sessions → Customize session token "
+            "adicione o claim `email` (ex.: e-mail primário do utilizador)."
+        )
     return ClerkAuthUser(
         user_id=sub,
         email=email,

@@ -38,6 +38,8 @@ class Settings(BaseSettings):
     linear_webhook_secret: str = ""
 
     clerk_secret_key: str = ""
+    # pk_... — exposta em /clerk-frontend-config.js (Railway sem VITE no build do front)
+    clerk_publishable_key: str = ""
     clerk_jwks_url: str = ""
     clerk_authorized_parties: str = "http://localhost:5173"
 
